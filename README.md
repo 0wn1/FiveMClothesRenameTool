@@ -1,4 +1,16 @@
-# FiveM Clothes Rename Tool
+## FiveM Clothes Rename Tool
+
+### Update v1.1
+This update now allows the user to rename FiveM clothing files back to GTA V single-player.
+
+------------
+### Changelogs v1.1
+- Added icon to the executable.
+- Added Console.Title() to the application.
+- Implemented an option for the user to rename FiveM clothing files for GTA V Single-Player by removing all characters before the ^ symbol.
+- Made a few other minor fixes.
+
+------------
 This is a command-line tool written in C# that allows users to rename GTA V clothes files to FiveM clothing files.
 
 ------------

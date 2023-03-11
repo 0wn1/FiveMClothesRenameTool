@@ -7,6 +7,7 @@ namespace FiveMClothesRenameTool
     {
         static void Main(string[] args)
         {
+            Console.Title = "FiveMClothesRenameTool v1.1";
             Console.WriteLine("Welcome to FiveM Clothes Rename Tool!");
 
             string sourceFolderPath = string.Empty;
@@ -72,28 +73,105 @@ namespace FiveMClothesRenameTool
                 sourceFolderPath = backupFolderPath;
             }
 
+            bool renameToSinglePlayer = false;
+
+            while (true)
+            {
+                Console.Write("Do you want to rename all files to Single Player format? (Y/N): ");
+                string userInput = Console.ReadLine().Trim().ToUpper();
+                if (userInput == "Y")
+                {
+                    renameToSinglePlayer = true;
+                    break;
+                }
+                else if (userInput == "N")
+                {
+                    renameToSinglePlayer = false;
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter Y or N.");
+                }
+            }
+
+            if (renameToSinglePlayer)
+            {
+                foreach (string filePath in Directory.GetFiles(sourceFolderPath, "*.*", SearchOption.AllDirectories))
+                {
+                    string fileName = Path.GetFileName(filePath);
+                    string newFileName = fileName.Substring(fileName.LastIndexOf("^") + 1);
+
+                    string newFilePath = Path.Combine(Path.GetDirectoryName(filePath), newFileName);
+
+                    try
+                    {
+                        File.Move(filePath, newFilePath);
+                        Console.WriteLine("Renamed file: {0} -> {1}", filePath, newFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Failed to rename file: {0} -> {1}. {2}", filePath, newFilePath, ex.Message);
+                    }
+                }
+                Console.WriteLine("Task completed. Please press Enter to exit.");
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+
             Console.Write("Please enter the prefix to be added to the file names (press enter to use subfolder name as prefix): ");
             string prefix = Console.ReadLine().Trim();
-            if (string.IsNullOrEmpty(prefix))
+
+            string childFolderName = new DirectoryInfo(sourceFolderPath).Name;
+            string defaultPrefix = $"{childFolderName}^";
+
+            if (!string.IsNullOrEmpty(prefix))
             {
-                prefix = "{0}^";
-            }
-            else if (!prefix.EndsWith("^"))
-            {
-                prefix += "^";
+                if (prefix.EndsWith("^"))
+                {
+                    prefix = prefix.Substring(0, prefix.Length - 1);
+                }
+                defaultPrefix = prefix;
             }
 
             string[] extensionsToRename = { ".ydd", ".ytd" };
-            string[] filePathsToRename = Directory.GetFiles(sourceFolderPath, "*.*", SearchOption.AllDirectories);
             int renamedFileCount = 0;
-            foreach (string filePath in filePathsToRename)
+
+            foreach (string filePath in Directory.GetFiles(sourceFolderPath, "*.*", SearchOption.AllDirectories))
             {
                 string extension = Path.GetExtension(filePath);
+
                 if (Array.IndexOf(extensionsToRename, extension) >= 0)
                 {
-                    string subFolder = Path.GetDirectoryName(filePath).Replace(sourceFolderPath, "").TrimStart('\\');
-                    string fileName = string.Format(prefix, subFolder) + Path.GetFileName(filePath);
+                    string fileName = Path.GetFileName(filePath);
+                    string subFolderName = new DirectoryInfo(Path.GetDirectoryName(filePath)).Name;
+
+                    if (subFolderName.Contains("_new"))
+                    {
+                        subFolderName = subFolderName.Substring(0, subFolderName.IndexOf("_new"));
+                    }
+                    else
+                    {
+                        childFolderName += "^";
+                    }
+
+                    string filePrefix = subFolderName == childFolderName ? defaultPrefix : $"{subFolderName}^";
+
+                    if (!string.IsNullOrEmpty(prefix))
+                    {
+                        if (subFolderName != childFolderName)
+                        {
+                            filePrefix = $"{prefix}^";
+                        }
+                        else
+                        {
+                            filePrefix = prefix;
+                        }
+                    }
+
+                    fileName = $"{filePrefix}{fileName}";
                     string newFilePath = Path.Combine(Path.GetDirectoryName(filePath), fileName);
+
                     try
                     {
                         File.Move(filePath, newFilePath);
@@ -109,6 +187,7 @@ namespace FiveMClothesRenameTool
 
             Console.WriteLine("Renamed {0} files.", renamedFileCount);
             Console.ReadLine();
+
         }
     }
 }
